@@ -18,7 +18,7 @@ export default function Signup() {
 
   const navigate = useNavigate();
 
-  // 🔐 Signup & Request QR Code
+  // Signup & Request QR Code
   const handleSignupClick = async () => {
     const hasError = !userName || !password || password !== confirmPassword;
     setErrors({
@@ -51,7 +51,7 @@ export default function Signup() {
     }
   };
 
-  // ✅ Verify MFA Token
+  // Verify MFA Token
   const handleVerifyCode = async () => {
     if (!token) {
       setSnackbar({ open: true, message: "Enter the code from Google Authenticator." });

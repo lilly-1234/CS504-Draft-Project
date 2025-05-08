@@ -4,6 +4,7 @@ import {
   Grid, Card, CardContent, CardActions, Chip, Stack
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import { jwtDecode } from 'jwt-decode';
 
 const Dashboard = () => {
   const [notes, setNotes] = useState([]);
@@ -12,19 +13,58 @@ const Dashboard = () => {
   const [tags, setTags] = useState('');
   const [searchTag, setSearchTag] = useState('');
   const [editNoteId, setEditNoteId] = useState(null);
+  const [username, setUsername] = useState("");
   const navigate = useNavigate();
 
   const token = localStorage.getItem("token");
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      setUsername(storedUser);
+    }
+  }, []);
 
-  // ✅ Auto-fetch notes on load
+  // Auto logout if token is expired
+  useEffect(() => {
+    if (token) {
+      try {
+        const { exp } = jwtDecode(token);
+        const now = Date.now();
+
+        if (now >= exp * 1000) {
+          localStorage.clear();
+          alert("Session expired. Please log in again.");
+          navigate("/login");
+        } else {
+          const timeout = exp * 1000 - now;
+          const logoutTimer = setTimeout(() => {
+            localStorage.clear();
+            alert("Session expired. Please log in again.");
+            navigate("/login");
+          }, timeout);
+          return () => clearTimeout(logoutTimer);
+        }
+      } catch (err) {
+        console.error("Invalid token:", err);
+        localStorage.clear();
+        navigate("/login");
+      }
+    }
+  }, [token, navigate]);
+
+  // Fetch notes
   useEffect(() => {
     const fetchNotes = async () => {
       try {
         const res = await fetch('/api/notes', {
-          headers: {
-            "Authorization": `Bearer ${token}`,
-          },
+          headers: { "Authorization": `Bearer ${token}` },
         });
+        if (res.status === 403) {
+          localStorage.clear();
+          alert("Session expired. Please log in again.");
+          navigate('/login');
+          return;
+        }
         const data = await res.json();
         if (Array.isArray(data)) setNotes(data);
       } catch (err) {
@@ -32,7 +72,7 @@ const Dashboard = () => {
       }
     };
     fetchNotes();
-  }, [token]);
+  }, [token, navigate]);
 
   const handleLogout = () => {
     localStorage.clear();
@@ -57,6 +97,14 @@ const Dashboard = () => {
         },
         body: JSON.stringify(note),
       });
+
+      if (res.status === 403) {
+        localStorage.clear();
+        alert("Session expired. Please log in again.");
+        navigate("/login");
+        return;
+      }
+
       const result = await res.json();
 
       if (res.ok) {
@@ -89,6 +137,13 @@ const Dashboard = () => {
         headers: { "Authorization": `Bearer ${token}` },
       });
 
+      if (res.status === 403) {
+        localStorage.clear();
+        alert("Session expired. Please log in again.");
+        navigate("/login");
+        return;
+      }
+
       if (res.ok) {
         setNotes(notes.filter(n => n._id !== noteId));
       }
@@ -103,15 +158,19 @@ const Dashboard = () => {
 
   return (
     <Container>
-      {/* Logout bar */}
-      <Box display="flex" justifyContent="space-between" alignItems="center" my={2}>
-        <Typography variant="h4">Secure Notes Dashboard</Typography>
-        <Button variant="outlined" onClick={handleLogout}>
-          Logout
-        </Button>
+      <Box display="flex" justifyContent="space-between" alignItems="center" my={2}> 
+      <Box>
+        <Typography variant="h4">Secure Notes</Typography>
+        {username && (
+          <Typography variant="h7" >
+            Hello, {username}
+          </Typography>
+        )}
       </Box>
+      <Button variant="outlined" onClick={handleLogout}>Logout</Button>
+    </Box>
 
-      {/* Note editor */}
+
       <Box mb={3}>
         <Stack spacing={2}>
           <TextField label="Title" fullWidth value={title} onChange={e => setTitle(e.target.value)} />
@@ -131,7 +190,6 @@ const Dashboard = () => {
         sx={{ mb: 3 }}
       />
 
-      {/* Notes list */}
       <Grid container spacing={2}>
         {filteredNotes.map((note) => (
           <Grid item xs={12} sm={6} md={4} key={note._id}>

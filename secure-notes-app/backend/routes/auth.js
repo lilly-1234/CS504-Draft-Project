@@ -61,7 +61,8 @@ router.post('/verify-mfa-login', async (req, res) => {
 
   if (!verified) return res.status(401).json({ verified: false });
 
-  const jwtToken = jwt.sign({ username, userId: user._id }, JWT_SECRET, { expiresIn: '1h' });
+  const jwtToken = jwt.sign({ username, userId: user._id }, JWT_SECRET, { expiresIn: '5m' });
+  console.log(jwtToken);
   res.json({ verified: true, token: jwtToken });
 });
 
