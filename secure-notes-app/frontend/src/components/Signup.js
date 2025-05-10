@@ -5,82 +5,100 @@ import {
 } from '@mui/material';
 import { useNavigate, Link } from "react-router-dom";
 import AppLogo from "../Logo/AppLogo.png";
-import "./Signup.css";
+import "./Page.css";
 
+// Component for signup
 export default function Signup() {
+  // State hooks for username, password, confirm password, MfA Token, and QR code
   const [userName, setUserName] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [token, setToken] = useState("");
   const [qrCode, setQrCode] = useState(null);
+  
+  // Snackbar for success/error messages
   const [snackbar, setSnackbar] = useState({ open: false, message: "" });
   const [errors, setErrors] = useState({ userName: false, password: false, confirmPassword: false });
 
-  const navigate = useNavigate();
+  const navigate = useNavigate(); // For redirecting after successful MFA setup
 
-  // Signup & Request QR Code
+  // Handles the signup and QR code request
   const handleSignupClick = async () => {
+    // Validate input fields
     const hasError = !userName || !password || password !== confirmPassword;
+    
+    // Set error states accordingly
     setErrors({
       userName: !userName,
       password: !password,
       confirmPassword: !confirmPassword || password !== confirmPassword
     });
-
+    
+    // If there is an error the page throws an snackbar witherror message
     if (hasError) {
-      setSnackbar({ open: true, message: "Please fill in all fields correctly." });
+      setSnackbar({ open: true, message: "Please fill in all fields correctly" });
       return;
     }
 
     try {
+      // Send signup request to backend
       const res = await fetch('/api/signup', {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username: userName, password })
       });
+
       const data = await res.json();
 
+      // On successful signup, show QR code for MFA setup
       if (res.ok && data.qrCode) {
         setQrCode(data.qrCode);
-        setSnackbar({ open: true, message: "Scan the QR code with Google Authenticator." });
+        setSnackbar({ open: true, message: "Scan the QR code with Google Authenticator" });
       } else {
-        setSnackbar({ open: true, message: data.message || "Signup failed." });
+        setSnackbar({ open: true, message: data.message || "Signup failed" });
       }
     } catch {
-      setSnackbar({ open: true, message: "Server error during signup." });
+      setSnackbar({ open: true, message: "Server error during signup" });
     }
   };
 
-  // Verify MFA Token
+  // Handles the MFA code verification
   const handleVerifyCode = async () => {
     if (!token) {
-      setSnackbar({ open: true, message: "Enter the code from Google Authenticator." });
+      setSnackbar({ open: true, message: "Enter the code from Google Authenticator" });
       return;
     }
 
     try {
+      // Send MFA code to backend for verification
       const res = await fetch('/api/verify-mfa-setup', {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username: userName, token })
       });
+
       const result = await res.json();
 
       if (result.verified) {
         setSnackbar({ open: true, message: "MFA Verified. Redirecting to login..." });
-        setTimeout(() => navigate("/login"), 1500);
+        setTimeout(() => navigate("/login"), 1500); // Redirect after delay
       } else {
-        setSnackbar({ open: true, message: "Invalid code. Please try again." });
+        setSnackbar({ open: true, message: "Invalid code. Please try again" });
       }
     } catch {
-      setSnackbar({ open: true, message: "Verification failed." });
+      setSnackbar({ open: true, message: "Verification failed" });
     }
   };
+  // Snackbar close handler function
+  const handleCloseSnackbar = () => {
+    setSnackbar(prev => ({ ...prev, open: false }));
+  };
 
+  // UI Rendering
   return (
-    <Box className="login-container">
+    <Box className="page-container">
       <Container maxWidth="xs">
-        <Card className="login-card">
+        <Card className="page-card">
           <CardContent>
             <Stack spacing={2} alignItems="center">
               <Box className="logo-container">
@@ -93,7 +111,7 @@ export default function Signup() {
                 <>
                   <FormControl fullWidth error={errors.userName}>
                     <TextField
-                      label="Username"
+                      label="Username or Email"
                       value={userName}
                       onChange={e => setUserName(e.target.value)}
                     />
@@ -137,7 +155,9 @@ export default function Signup() {
 
           <CardActions className="card-actions">
             {!qrCode ? (
-              <Button variant="contained" fullWidth onClick={handleSignupClick}>Sign Up</Button>
+              <Button variant="contained" fullWidth onClick={handleSignupClick}>
+                Sign Up
+              </Button>
             ) : (
               <Button variant="contained" color="secondary" fullWidth onClick={handleVerifyCode}>
                 Verify Code
@@ -153,11 +173,12 @@ export default function Signup() {
         </Card>
       </Container>
 
+      {/* Snackbar for displaying success or error messages */}
       <Snackbar
         anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
         open={snackbar.open}
         autoHideDuration={3000}
-        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        onClose={handleCloseSnackbar}
         message={snackbar.message}
       />
     </Box>

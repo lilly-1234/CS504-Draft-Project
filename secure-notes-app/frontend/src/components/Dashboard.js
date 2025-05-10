@@ -1,12 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Box, Container, Typography, TextField, Button,
-  Grid, Card, CardContent, CardActions, Chip, Stack
+  Grid, Card, CardContent, CardActions, Chip, Stack, Snackbar
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
 
 const Dashboard = () => {
+  // State variables for managing notes, search and user
   const [notes, setNotes] = useState([]);
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
@@ -14,9 +15,12 @@ const Dashboard = () => {
   const [searchTag, setSearchTag] = useState('');
   const [editNoteId, setEditNoteId] = useState(null);
   const [username, setUsername] = useState("");
+  const [snackbar, setSnackbar] = useState({ open: false, message: "" });
+  
   const navigate = useNavigate();
+  const token = localStorage.getItem("token"); // Grabs the JWT token saved during login
 
-  const token = localStorage.getItem("token");
+  // Fetch stored username
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
@@ -28,20 +32,22 @@ const Dashboard = () => {
   useEffect(() => {
     if (token) {
       try {
-        const { exp } = jwtDecode(token);
+        const { exp } = jwtDecode(token); // Get expiration from JWT
         const now = Date.now();
-
-        if (now >= exp * 1000) {
+        // If Token is expired, clear the storage and send an alert massage and redirect to login
+        if (now >= exp * 1000) { 
           localStorage.clear();
-          alert("Session expired. Please log in again.");
+          alert("Session expired. Please log in again");
           navigate("/login");
         } else {
+          // Schedule auto logout when token will expire
           const timeout = exp * 1000 - now;
           const logoutTimer = setTimeout(() => {
             localStorage.clear();
-            alert("Session expired. Please log in again.");
+            alert("Session expired. Please log in again");
             navigate("/login");
           }, timeout);
+          // Cleanup on component unmount 
           return () => clearTimeout(logoutTimer);
         }
       } catch (err) {
@@ -52,16 +58,17 @@ const Dashboard = () => {
     }
   }, [token, navigate]);
 
-  // Fetch notes
+  // Fetch all notes on page load
   useEffect(() => {
+    // Fetching the notes from the backend
     const fetchNotes = async () => {
       try {
         const res = await fetch('/api/notes', {
           headers: { "Authorization": `Bearer ${token}` },
         });
-        if (res.status === 403) {
+        if (res.status === 403) { // If The token is missing, invalid, or expired
           localStorage.clear();
-          alert("Session expired. Please log in again.");
+          alert("Session expired. Please log in again");
           navigate('/login');
           return;
         }
@@ -74,21 +81,26 @@ const Dashboard = () => {
     fetchNotes();
   }, [token, navigate]);
 
+  // Logout function
   const handleLogout = () => {
     localStorage.clear();
     navigate('/login');
   };
-
+  // Create or update a note
   const handleAddOrUpdateNote = async () => {
-    if (!title || !content) return;
+    if (!title || !content)  {
+      setSnackbar({ open: true, message: "Please fill in all required fields" });
+      return;
+    }
 
     const note = {
       title,
       content,
-      tags: tags.split(',').map(t => t.trim()).filter(t => t),
+      tags: tags.split(',').map(t => t.trim()).filter(t => t),  // convert comma-separated to array
     };
 
     try {
+      // Sends the note to the backend using the fetch() API
       const res = await fetch(`/api/notes${editNoteId ? `/${editNoteId}` : ''}`, {
         method: editNoteId ? 'PUT' : 'POST',
         headers: {
@@ -98,9 +110,9 @@ const Dashboard = () => {
         body: JSON.stringify(note),
       });
 
-      if (res.status === 403) {
+      if (res.status === 403) { // If the token is invalid or expired, the server returns 
         localStorage.clear();
-        alert("Session expired. Please log in again.");
+        alert("Session expired. Please log in again");
         navigate("/login");
         return;
       }
@@ -122,7 +134,7 @@ const Dashboard = () => {
       console.error("Save note error:", err);
     }
   };
-
+  // Function to edit the note
   const handleEdit = (note) => {
     setTitle(note.title);
     setContent(note.content);
@@ -130,6 +142,7 @@ const Dashboard = () => {
     setEditNoteId(note._id);
   };
 
+  // Function to remove the note
   const handleDelete = async (noteId) => {
     try {
       const res = await fetch(`/api/notes/${noteId}`, {
@@ -152,9 +165,16 @@ const Dashboard = () => {
     }
   };
 
+  // Filtering Notes by tags
   const filteredNotes = searchTag
     ? notes.filter(note => note.tags.includes(searchTag))
     : notes;
+  
+  // Function to handle snackbar close
+  const handleCloseSnackbar = () => {
+    setSnackbar({ ...snackbar, open: false });
+  };
+
 
   return (
     <Container>
@@ -210,9 +230,19 @@ const Dashboard = () => {
             </Card>
           </Grid>
         ))}
-      </Grid>
-    </Container>
+        
+      {/* Snackbar for messages */}
+      <Snackbar
+          anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+          open={snackbar.open}
+          autoHideDuration={3000}
+          onClose={handleCloseSnackbar}
+          message={snackbar.message}
+        />
+  </Grid>
+  </Container>
   );
-};
+}
+  
 
 export default Dashboard;

@@ -1,4 +1,4 @@
-.login-container {
+.page-container {
     display: flex;
     justify-content: center;
     align-items: center;
@@ -6,7 +6,7 @@
     background-color: #F7F7F7;
   }
   
-  .login-card {
+  .page-card {
     min-width: 300px;
     padding: 24px;
   }
