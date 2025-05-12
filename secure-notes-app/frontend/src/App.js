@@ -6,6 +6,8 @@ import { jwtDecode } from "jwt-decode"; // jwtDecode to decode JWT tokens and ac
 import SignupPage from './components/Signup';
 import Login from './components/Login';
 import Dashboard from './components/Dashboard';
+import MFAsetup from './components/MFAsetup';
+
 
 export default function App() {
   // State to track authentication status
@@ -15,7 +17,7 @@ export default function App() {
   const [userId, setUserId] = useState(null);
   
   // Store the current user’s name
-  const [userName, setUserName] = useState("");
+  // const [userName, setUserName] = useState("");
 
   // Check JWT on first load
   useEffect(() => {
@@ -33,7 +35,7 @@ export default function App() {
           // Check if token is still valid 
           setIsAuthenticated(true);
           setUserId(decoded.userId || storedUser); // Set userId from token or fallback to stored user
-          setUserName(storedUser); // Set user name from localStorage
+          // setUserName(storedUser); // Set user name from localStorage
         } else {
           localStorage.clear();  // If not token expired then clear localStorage
         }
@@ -61,7 +63,7 @@ export default function App() {
               <Login
                 setIsAuthenticated={setIsAuthenticated}
                 setUserId={setUserId}
-                setUserName={setUserName}
+                // setUserName={setUserName}
               />
             )
           }
@@ -71,13 +73,15 @@ export default function App() {
           element={
             isAuthenticated ? (
               // If authenticated, show the dashboard  page and pass user info
-              <Dashboard userId={userId} userName={userName} />
+              <Dashboard userId={userId}  setIsAuthenticated={setIsAuthenticated}  />
             ) : (
               // If not, redirect them to login page
               <Navigate to="/login" replace />
             )
           }
         />
+        <Route path="/mfa-setup" element={<MFAsetup />} />
+        
         {/* Catches unknown routes and sends the user either to the dashboard (if they’re logged in) or the login page */}
         <Route path="*" element={<Navigate to={isAuthenticated ? "/dashboard" : "/login"} replace />} />
       </Routes>

@@ -6,7 +6,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
 
-const Dashboard = () => {
+const Dashboard = ({setIsAuthenticated}) => {
   // State variables for managing notes, search and user
   const [notes, setNotes] = useState([]);
   const [title, setTitle] = useState('');
@@ -38,7 +38,6 @@ const Dashboard = () => {
         if (now >= exp * 1000) { 
           localStorage.clear();
           alert("Session expired. Please log in again");
-          navigate("/login");
         } else {
           // Schedule auto logout when token will expire
           const timeout = exp * 1000 - now;
@@ -84,6 +83,7 @@ const Dashboard = () => {
   // Logout function
   const handleLogout = () => {
     localStorage.clear();
+    setIsAuthenticated(false);
     navigate('/login');
   };
   // Create or update a note
@@ -113,6 +113,7 @@ const Dashboard = () => {
       if (res.status === 403) { // If the token is invalid or expired, the server returns 
         localStorage.clear();
         alert("Session expired. Please log in again");
+        setIsAuthenticated(false);
         navigate("/login");
         return;
       }
@@ -175,6 +176,9 @@ const Dashboard = () => {
     setSnackbar({ ...snackbar, open: false });
   };
 
+  const handleGoToMFA = () => {
+  navigate('/mfa-setup', { state: { username } });  // username from state or decoded token
+};
 
   return (
     <Container>
@@ -182,13 +186,16 @@ const Dashboard = () => {
       <Box>
         <Typography variant="h4">Secure Notes</Typography>
         {username && (
-          <Typography variant="h7" >
+          <Typography variant="subtitle1" >
             Hello, {username}
           </Typography>
         )}
+        <Box className="action-buttons">
+          <Button variant="outlined" onClick={handleLogout}> Logout </Button>
+          <Button variant="outlined" onClick={handleGoToMFA}> MFA Scan </Button> 
+        </Box>
       </Box>
-      <Button variant="outlined" onClick={handleLogout}>Logout</Button>
-    </Box>
+      </Box>
 
 
       <Box mb={3}>
