@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-d
 import { jwtDecode } from "jwt-decode"; // jwtDecode to decode JWT tokens and access payload data
 
 // Importing page components
-import SignupPage from './components/Signup';
+import Signup from './components/Signup';
 import Login from './components/Login';
 import Dashboard from './components/Dashboard';
 import MFAsetup from './components/MFAsetup';
@@ -15,9 +15,6 @@ export default function App() {
   
   // Store the current user’s ID
   const [userId, setUserId] = useState(null);
-  
-  // Store the current user’s name
-  // const [userName, setUserName] = useState("");
 
   // Check JWT on first load
   useEffect(() => {
@@ -35,9 +32,8 @@ export default function App() {
           // Check if token is still valid 
           setIsAuthenticated(true);
           setUserId(decoded.userId || storedUser); // Set userId from token or fallback to stored user
-          // setUserName(storedUser); // Set user name from localStorage
         } else {
-          localStorage.clear();  // If not token expired then clear localStorage
+          localStorage.clear();  // If not, token expired then clear localStorage
         }
       } catch (err) {
         // Error message for invalid token and clearing it from local storage
@@ -51,7 +47,7 @@ export default function App() {
     <Router>
       <Routes>
         {/* Root path for signup page */}
-        <Route path="/" element={<SignupPage />} />
+        <Route path="/" element={<Signup />} />
         <Route
           path="/login"
           element={
@@ -63,7 +59,6 @@ export default function App() {
               <Login
                 setIsAuthenticated={setIsAuthenticated}
                 setUserId={setUserId}
-                // setUserName={setUserName}
               />
             )
           }

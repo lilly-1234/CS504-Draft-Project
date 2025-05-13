@@ -38,12 +38,15 @@ const Dashboard = ({setIsAuthenticated}) => {
         if (now >= exp * 1000) { 
           localStorage.clear();
           alert("Session expired. Please log in again");
+          setIsAuthenticated(false);
+          navigate('/login');
         } else {
           // Schedule auto logout when token will expire
           const timeout = exp * 1000 - now;
           const logoutTimer = setTimeout(() => {
             localStorage.clear();
             alert("Session expired. Please log in again");
+            setIsAuthenticated(false);
             navigate("/login");
           }, timeout);
           // Cleanup on component unmount 
@@ -52,6 +55,7 @@ const Dashboard = ({setIsAuthenticated}) => {
       } catch (err) {
         console.error("Invalid token:", err);
         localStorage.clear();
+        setIsAuthenticated(false);
         navigate("/login");
       }
     }
@@ -68,6 +72,7 @@ const Dashboard = ({setIsAuthenticated}) => {
         if (res.status === 403) { // If The token is missing, invalid, or expired
           localStorage.clear();
           alert("Session expired. Please log in again");
+          setIsAuthenticated(false);
           navigate('/login');
           return;
         }
@@ -154,6 +159,7 @@ const Dashboard = ({setIsAuthenticated}) => {
       if (res.status === 403) {
         localStorage.clear();
         alert("Session expired. Please log in again.");
+        setIsAuthenticated(false);
         navigate("/login");
         return;
       }
@@ -191,8 +197,8 @@ const Dashboard = ({setIsAuthenticated}) => {
           </Typography>
         )}
         <Box className="action-buttons">
-          <Button variant="outlined" onClick={handleLogout}> Logout </Button>
-          <Button variant="outlined" onClick={handleGoToMFA}> MFA Scan </Button> 
+          <Button variant="outlined" onClick={handleLogout}> LOGOUT </Button>
+          <Button variant="outlined" onClick={handleGoToMFA}> SETUP MFA </Button> 
         </Box>
       </Box>
       </Box>
