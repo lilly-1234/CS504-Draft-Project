@@ -15,7 +15,7 @@ export default function Signup() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [token, setToken] = useState("");
   const [qrCode, setQrCode] = useState(null);
-  
+
   // Snackbar for success/error messages
   const [snackbar, setSnackbar] = useState({ open: false, message: "" });
   const [errors, setErrors] = useState({ userName: false, password: false, confirmPassword: false });
@@ -26,14 +26,14 @@ export default function Signup() {
   const handleSignupClick = async () => {
     // Validate input fields
     const hasError = !userName || !password || password !== confirmPassword;
-    
+
     // Set error states accordingly
     setErrors({
       userName: !userName,
       password: !password,
       confirmPassword: !confirmPassword || password !== confirmPassword
     });
-    
+
     // If there is an error the page throws an snackbar witherror message
     if (hasError) {
       setSnackbar({ open: true, message: "Please fill in all fields correctly" });
@@ -165,11 +165,12 @@ export default function Signup() {
             )}
           </CardActions>
 
-          <Box textAlign="center" width="100%" mt={1} mb={2}>
+          {!qrCode && <Box textAlign="center" width="100%" mt={1} mb={2}>
             <Typography variant="body2">
               Already have an account? <Link to="/login">Login here</Link>
             </Typography>
           </Box>
+          }
         </Card>
       </Container>
 
